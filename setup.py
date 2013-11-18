@@ -16,13 +16,18 @@
 
 from distutils.core import setup
 
+
 setup(
     name='habrahabr-python',
     version='0.0.1',
-    description='Клиент для API Хабрахабра, написанный на Python',
+    description='Неофициальный клиент для API Хабрахабра, написанный на Python',
     author='Kafeman',
     author_email='kafemanw@gmail.com',
     url='https://github.com/kafeman/habrahabr-python',
-    #packages=['habrahabr'],
     py_modules=['habrahabr'],
+    install_requires=[
+        'json',
+        'urllib',
+        'urllib2',
+        ],
     )
