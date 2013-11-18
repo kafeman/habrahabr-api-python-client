@@ -25,8 +25,4 @@ setup(
     author_email='kafemanw@gmail.com',
     url='https://github.com/kafeman/habrahabr-python',
     py_modules=['habrahabr'],
-    install_requires=[
-        'urllib',
-        'urllib2',
-        ],
     )
