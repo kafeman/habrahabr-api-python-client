@@ -1,5 +1,9 @@
-build/
 *.pyc
+
+# создаются при сборке
+MANIFEST
+build/
+dist/
 
 # потом выложу
 habrahabr_test.py
