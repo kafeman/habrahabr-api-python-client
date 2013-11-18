@@ -18,7 +18,7 @@ from distutils.core import setup
 
 
 setup(
-    name='habrahabr-python',
+    name='habrahabr',
     version='0.0.1',
     description='Неофициальный клиент для API Хабрахабра, написанный на Python',
     author='Kafeman',
@@ -26,7 +26,6 @@ setup(
     url='https://github.com/kafeman/habrahabr-python',
     py_modules=['habrahabr'],
     install_requires=[
-        'json',
         'urllib',
         'urllib2',
         ],
