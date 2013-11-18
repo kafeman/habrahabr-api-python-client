@@ -290,4 +290,4 @@ class Api:
             ('users', UserService),
         ]
         for service in self.services:
-            self.__dict__[service[0]] = service[1](**self.settings)
+            setattr(self, service[0], service[1](**self.settings))
