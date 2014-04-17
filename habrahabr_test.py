@@ -62,4 +62,4 @@ class ApiTestCase(TestCase):
 
 
 if __name__ == '__main__':
-    unittest2.main()
+    unittest.main()
