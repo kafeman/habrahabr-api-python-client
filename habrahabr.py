@@ -16,7 +16,6 @@
 
 import json
 import urllib
-import urllib2
 
 
 ENDPOINT = 'https://api.habrahabr.ru/v1'
@@ -25,9 +24,9 @@ ENDPOINT = 'https://api.habrahabr.ru/v1'
 def _fetch_url(url, method, data, headers):
     if data is not None:
         data = urllib.urlencode(data)
-    request = urllib2.Request(url, data, headers)
+    request = urllib.request.Request(url, data, headers)
     request.get_method = lambda: method
-    response = urllib2.urlopen(request)
+    response = urllib.request.urlopen(request)
     return response.read()
 
 
