@@ -31,29 +31,16 @@ def _fetch_url(url, method, data, headers):
     return response.read()
 
 
-class ClientError(Exception):
-    """ Ошибка клиента.
-    """
-    @property
-    def message(self):
-        return self.args[0]
-
-
 class Service:
-    """ Абстрактный сервис для наследования.
-    """
+    """Абстрактный сервис для наследования."""
     def __init__(self, **settings):
-        """ Инициализирует сервис.
-        """
-        # Все ресурсы API Хабрахабра требуют авторизации
-        # TODO Возможно, это можно записать красивее?
+        """Инициализировать сервис."""
         if 'client' not in settings or 'token' not in settings:
-            raise ClientError('Нужно указать ID клиента и токен')
+            raise ValueError('Нужно указать ID клиента и токен')
         self.settings = settings
 
     def request(self, resource, method='GET', data=None):
-        """ Посылает запросы на сервера Хабрахабра и парсит ответ.
-        """
+        """Послать запрос на сервер Хабрахабра и распарсить ответ."""
         url = self.settings.get('endpoint') + resource
         headers = { 'client': self.settings.get('client'),
                     'token': self.settings.get('token') }
@@ -62,199 +49,270 @@ class Service:
 
 
 class CommentService(Service):
-    """ Сервис для работы с комментариями.
-    """
+    """Сервис для работы с комментариями."""
     def get(self, post_id):
-        """ Получает комментарии к посту.
-        """
+        """Получить комментарии к посту."""
         return self.request('/comments/%d' % post_id)
 
     def add(self, post_id, text, parent_id=0):
-        """ Добавляет комментарий к посту.
-        """
+        """Добавить комментарий к посту."""
         data = {'text': text, 'parent_id': parent_id}
         return self.request('/comments/%d' % post_id, method='PUT', data=data)
 
+    def vote(self, comment_id, vote):
+        """Проголосовать за комментарий."""
+        if vote not in [-1, 1]:
+            raise ValueError('Неверный формат голоса')
+        data = {'vote': vote}
+        return self.request('/comments/%d/vote' % comment_id, method='PUT', data=data)
+
+    def vote_plus(self, comment_id):
+        """Проголосовать за комментарий положительно."""
+        return self.vote(comment_id, 1)
+
+    def vote_minus(self, comment_id):
+        """Проголосовать за комментарий отрицательно."""
+        return self.vote(comment_id, -1)
+
 
 class CompanyService(Service):
-    """ Сервис для работы с компаниями.
-    """
+    """Сервис для работы с компаниями."""
     def get_posts(self, alias, page=1):
-        """ Получает посты из корпоративного блога компании.
-        """
+        """Получить посты из корпоративного блога компании."""
         return self.request('/company/%s?page=%d' % (alias, page))
 
     def get_info(self, alias):
-        """ Получает информацию о компании.
-        """
+        """Получить информацию о компании."""
         return self.request('/company/%s/info' % alias)
 
 
-class FeedResource(Service):
-    """ Сервис для работы с лентой пользователя.
-    """
+class FeedService(Service):
+    """Сервис для работы с лентой пользователя."""
     def get_habred(self, page=1):
-        """ Получает захабренные посты.
-        """
+        """Получить захабренные посты."""
         return self.request('/feed/habred?page=%d' % page)
 
     def get_unhabred(self, page=1):
-        """ Получает отхабренные посты.
-        """
+        """Получить отхабренные посты."""
         return self.request('/feed/unhabred?page=%d' % page)
 
     def get_new(self, page=1):
-        """ Получает новые посты.
-        """
+        """Получить новые посты."""
         return self.request('/feed/new?page=%d' % page)
 
 
 class HubService(Service):
-    """ Сервис для работы с хабами.
-    """
+    """Сервис для работы с хабами."""
     def get_info(self, alias):
-        """ Получает информацию о хабе.
-        """
+        """Получить информацию о хабе."""
         return self.request('/hub/%s/info' % alias)
 
     def get_habred(self, alias, page=1):
-        """ Получает захабренные посты.
-        """
+        """Получить захабренные посты."""
         return self.request('/hub/%s/habred?page=%d' % (alias, page))
 
     def get_unhabred(self, alias, page=1):
-        """ Получает отхабренные посты.
-        """
+        """Получить отхабренные посты."""
         return self.request('/hub/%s/unhabred?page=%d' % (alias, page))
 
     def get_new(self, alias, page=1):
-        """ Получает новые посты.
-        """
+        """Получить новые посты."""
         return self.request('/hub/%s/new?page=%d' % (alias, page))
+
+    def get_all(self, page=1):
+        """Получить все хабы."""
+        return self.request('/hubs?page=%d' % page)
+
+    def get_categories(self):
+        """Получить категории хабов."""
+        return self.request('/hubs/categories')
+
+    def get_by_category(self, category, page=1):
+        """Получить хабы, относящиеся к указанной категории."""
+        return self.request('/hubs/categories/%s?page=%d' % (category, page))
+
+    def subscribe(self, alias):
+        """Подписать пользователя на хаб."""
+        return self.request('/hub/%s' % alias, method='PUT')
+
+    def unsubscribe(self, alias):
+        """Отписать пользователя от хаба."""
+        return self.request('/hub/%s' % alias, method='DELETE')
+
+
+class PollService(Service):
+    """Сервис для работы с опросами."""
+    def get(self, poll_id):
+        """Получить опрос."""
+        return self.request('/polls/%d' % poll_id)
+
+    def vote(self, poll_id, answer_id):
+        """Проголосовать за один или несколько ответов."""
+        pass
 
 
 class PostService(Service):
-    """ Сервис для работы с постами.
-    """
+    """Сервис для работы с постами."""
     def get(self, post_id):
-        """ Получает пост по id.
-        """
+        """Получить информацию о посте по его ID."""
         return self.request('/post/%d' % post_id)
 
     def vote(self, post_id, vote):
-        """ Голосует за пост.
+        """Проголосовать за пост.
 
         Этот метод отключен по-умолчанию. Для включения обратитесь в службу
         технической поддержки Хабрахабра.
         """
         if vote not in [-1, 0, 1]:
-            raise ClientError('Неверный формат голоса')
+            raise ValueError('Неверный формат голоса')
         data = {'vote': vote}
         return self.request('/post/%d/vote' % post_id, method='PUT', data=data)
 
-    def add_to_favorite(self, post_id):
-        """ Добавляет пост в избранное.
+    def vote_plus(self, post_id):
+        """Проголосовать за пост положительно.
+
+        Этот метод отключен по-умолчанию. Для включения обратитесь в службу
+        технической поддержки Хабрахабра.
         """
+        return self.vote(post_id, 1)
+
+    def vote_minus(self, post_id):
+        """Проголосовать за пост отрицательно.
+
+        Этот метод отключен по-умолчанию. Для включения обратитесь в службу
+        технической поддержки Хабрахабра.
+        """
+        return self.vote(post_id, -1)
+
+    def vote_neutral(self, post_id):
+        """Проголосовать за пост нейтрально.
+
+        Этот метод отключен по-умолчанию. Для включения обратитесь в службу
+        технической поддержки Хабрахабра.
+        """
+        return self.vote(post_id, 0)
+
+    def add_to_favorite(self, post_id):
+        """Добавить пост в избранное."""
         return self.request('/post/%d/favorite' % post_id, method='PUT')
 
     def remove_from_favorite(self, post_id):
-        """ Удаляет пост из избранного.
-        """
+        """Удалить пост из избранного."""
         return self.request('/post/%d/favorite' % post_id, method='DELETE')
+
+    def increment_view_counter(self, post_id):
+        """Увеличить счетчик просмотров."""
+        return self.request('/post/%d/viewcount' % post_id, method='PUT')
+
+    def get_meta(self, post_ids):
+        """Получить мета-информацию постов.
+
+        В настоящий момент можно запрашивать не более 30 постов за раз.
+        """
+        ids = ','.join(post_ids)
+        return self.request('/posts/meta?ids=%s' % ids)
 
 
 class SearchService(Service):
-    """ Сервис для поиска.
-    """
+    """Сервис для поиска."""
     def search_posts(self, query, page=1):
-        """ Получает результаты поиска для постов.
-        """
+        """Искать в постах."""
         return self.request('/search/posts/%s?page=%d' % (query, page))
 
     def search_users(self, query, page=1):
-        """ Получает результаты поиска для пользователей.
-        """
+        """Искать в пользователях."""
         return self.request('/search/users/%s?page=%d' % (query, page))
+
+    def search_hubs(self, query):
+        """Искать в хабах."""
+        return self.request('/hubs/search/%s' % query)
+
+
+class SettingsService(Service):
+    """Сервис для настроек."""
+    def accept_agreement(self, query, page=1):
+        """Принять соглашение."""
+        return self.request('/settings/agreement', method='PUT')
 
 
 class TrackerService(Service):
-    """ Сервис для работы с трекером пользователя.
-    """
+    """Сервис для работы с трекером пользователя."""
     def push(self, title, text):
-        """ Отправляет сообщение в раздел "Приложения".
-        """
+        """Отправить уведомление в раздел "Приложения"."""
         data = {'title': title, 'text': text}
         return self.request('/tracker', method='PUT', data=data)
 
     def get_counters(self):
-        """ Получает счетчик новых сообщений.
+        """Получить количество новых уведомлений.
+
+        Уведомления не отмечаются как просмотренные.
         """
         return self.request('/tracker/counters')
 
     def get_posts(self):
-        """ Получает сообщения из раздела "Посты".
-        """
+        """Получить уведомления из раздела "Посты".
+
+        Уведомления не отмечаются как просмотренные."""
         return self.request('/tracker/posts')
 
     def get_subscribers(self):
-        """ Получает сообщения из раздела "Подписчики".
-        """
+        """Получить уведомления из раздела "Подписчики".
+
+        Уведомления не отмечаются как просмотренные."""
         return self.request('/tracker/subscribers')
 
     def get_mentions(self):
-        """ Получает сообщения из раздела "Упоминания".
-        """
+        """Получить уведомления из раздела "Упоминания".
+
+        Уведомления не отмечаются как просмотренные."""
         return self.request('/tracker/mentions')
 
     def get_apps(self):
-        """ Получает сообщения из раздела "Приложения".
-        """
+        """Получить уведомления из раздела "Приложения".
+
+        Уведомления не отмечаются как просмотренные."""
         return self.request('/tracker/apps')
 
 
 class UserService(Service):
-    """ Сервис для работы с пользователями.
-    """
+    """Сервис для работы с пользователями."""
     def get(self, username=None):
-        """ Получает информацию о пользователе по логину или список из 100
-        пользователей с самым высоким рейтингом.
-        """
+        """Получить информацию о пользователе или список из 100 пользователей с
+        самым высоким рейтингом."""
         if username:
             return self.request('/users/%s' % username)
         return self.request('/users')
 
+    def get_current_user(self):
+        """Получить информацию о текущем пользователе."""
+        return self.get('me')
+
     def get_comments(self, username, page=1):
-        """ Получает комментарии пользователя.
-        """
+        """Получить комментарии пользователя."""
         return self.request('/users/%s/comments?page=%d' % (username, page))
 
     def get_posts(self, username):
-        """ Получает посты пользователя.
-        """
+        """Получить посты пользователя."""
         return self.request('/users/%s/posts?page=%d' % (username, page))
 
     def get_hubs(self, username):
-        """ Получает хабы на которые подписан пользователь.
-        """
+        """Получить хабы на которые подписан пользователь."""
         return self.request('/users/%s/hubs' % username)
 
     def get_companies(self, username, page=1):
-        """ Получает компании в которых работает пользователь.
-        """
+        """Получить компании, в которых работает пользователь."""
         return self.request('/users/%s/companies' % username)
 
     def get_followers(self, username, page=1):
-        """ Получает подписчиков пользователя.
-        """
+        """Получить подписчиков пользователя."""
         return self.request('/users/%s/followers?page=%d' % (username, page))
 
     def get_followed(self, username, page=1):
-        """ Кто подписан на пользователя, c пагинацией.
-        """
+        """Получить пользователей, которые подписаны на данного пользователя."""
         return self.request('/users/%s/followed?page=%d' % (username, page))
 
     def vote_plus(self, username):
-        """ Голосует положительно за карму пользователя.
+        """Проголосовать за карму положительно.
 
         Этот метод отключен по-умолчанию. Для включения обратитесь в службу
         технической поддержки Хабрахабра.
@@ -262,32 +320,38 @@ class UserService(Service):
         return self.request('/users/%s/vote' % username, method='PUT')
 
     def vote_minus(self, username):
-        """ Голосует отрицательно за карму пользователя.
+        """Проголосовать за карму отрицательно.
 
         Этот метод отключен по-умолчанию. Для включения обратитесь в службу
         технической поддержки Хабрахабра.
         """
         return self.request('/users/%s/vote' % username, method='DELETE')
 
+    def get_favorite_comments(self, username, page=1):
+        """Получить избранные комментарии пользователя."""
+        return self.request('/users/%s/favorites/comments?page=%d' % (username, page))
+
+    def get_favorite_posts(self, username, page=1):
+        """Получить избранные посты пользователя."""
+        return self.request('/users/%s/favorites/posts?page=%d' % (username, page))
+
 
 class Api:
-    """ Базовый класс для работы с API Хабрахабра.
-    """
+    """Базовый класс для работы с API Хабрахабра."""
     def __init__(self, **settings):
-        """ Инициализирует клиента API.
-        """
-        self.settings = settings
-        if 'endpoint' not in self.settings:
-            self.settings['endpoint'] = ENDPOINT
-        self.services = [
-            ('comments', CommentService),
-            ('companies', CompanyService),
-            ('feed', FeedResource),
-            ('hubs', HubService),
-            ('posts', PostService),
-            ('search', SearchService),
-            ('tracker', TrackerService),
-            ('users', UserService),
-        ]
-        for service in self.services:
-            setattr(self, service[0], service[1](**self.settings))
+        """Инициализирует клиента API."""
+        self._settings = settings
+        if 'endpoint' not in self._settings:
+            self._settings['endpoint'] = ENDPOINT
+        # TODO(kafeman): Сделать "ленивую" инициализацию, чтобы сервисы
+        # создавались только при необходимости и кешировались
+        self.comments = CommentService(**self._settings)
+        self.companies = CompanyService(**self._settings)
+        self.feed = FeedService(**self._settings)
+        self.hubs = HubService(**self._settings)
+        self.polls = PollService(**self._settings)
+        self.posts = PostService(**self._settings)
+        self.search = SearchService(**self._settings)
+        self.settings = SettingsService(**self._settings)
+        self.tracker = TrackerService(**self._settings)
+        self.users = UserService(**self._settings)
