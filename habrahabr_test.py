@@ -14,12 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest
+import unittest2
 
 import habrahabr
 
 
-class ApiTestCase(unittest.TestCase):
+class ApiTestCase(unittest2.TestCase):
     def setUp(self):
         self.api = habrahabr.Api(token='', client='')
 
@@ -55,4 +55,4 @@ class ApiTestCase(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest2.main()
