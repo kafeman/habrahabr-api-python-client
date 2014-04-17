@@ -8,7 +8,6 @@ python:
 
 install:
   - pip install -r requirements.txt
-  - pip install unittest2
 
 script:
   - python habrahabr_test.py
