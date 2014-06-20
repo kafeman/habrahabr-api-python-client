@@ -354,3 +354,10 @@ class Api:
         self.settings = SettingsService(**self._settings)
         self.tracker = TrackerService(**self._settings)
         self.users = UserService(**self._settings)
+
+    def get_authorization_url(self, redirect_uri, response_type='code'):
+        """Составить URL для запроса доступа."""
+        data = { 'redirect_uri': redirect_uri,
+                 'response_type': response_type,
+                 'client_id': self._settings.get('client') }
+        return OAUTH_URL + '?' + urllib.urlencode(data)
