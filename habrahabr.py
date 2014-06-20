@@ -19,6 +19,7 @@ import urllib
 
 
 ENDPOINT = 'https://api.habrahabr.ru/v1'
+OAUTH_URL = 'https://habrahabr.ru/auth/o/login/'
 
 
 def _fetch_url(url, method, data, headers):
